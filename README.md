@@ -111,7 +111,7 @@ graph LR
 **1. Cloner le dépôt**
 
 ```bash
-git clone https://github.com/<votre-username>/kroma-platform.git
+git clone https://github.com/jukyjuke/kroma-platform.git
 cd kroma-platform
 ```
 
