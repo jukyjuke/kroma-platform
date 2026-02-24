@@ -1,0 +1,151 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String
+  emailVerified Boolean
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  role          Role      @default(USER)
+  coins         Int       @default(0)
+
+  xp            Int       @default(0)
+  completedChallengesCount Int @default(0)
+  badges        String[]  @default([])
+  
+  streak        Int       @default(0)
+  lastActive    DateTime?
+  maxStreak     Int       @default(0)
+  
+  hearts        Int       @default(3)
+  lastHeartLoss DateTime?
+
+  
+  sessions      Session[]
+  accounts      Account[]
+
+  completedChallenges UserChallenge[]
+
+  followers     Follow[] @relation("followers")
+  following     Follow[] @relation("following")
+
+  @@index([xp])
+  @@map("user")
+}
+
+
+model Follow {
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower    User @relation("following", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User @relation("followers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@id([followerId, followingId])
+  @@map("follow")
+}
+
+model Session {
+  id        String   @id
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime
+  updatedAt DateTime
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session")
+}
+
+model Account {
+  id           String    @id
+  userId       String
+  accountId    String
+  providerId   String
+  accessToken  String?
+  refreshToken String?
+  expiresAt    DateTime?
+  password     String?
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("account")
+}
+
+model Verification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime?
+  updatedAt  DateTime?
+
+  @@map("verification")
+}
+
+model Challenge {
+  id          String     @id @default(cuid())
+  title       String
+  description String
+  difficulty  Difficulty
+  xp          Int
+  coins       Int        @default(20)
+  tags        String[]
+  
+  completedBy UserChallenge[]
+  questions   Question[]
+}
+
+model Question {
+  id          String    @id @default(cuid())
+  challengeId String
+  challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  
+  question    String
+  options     String[]
+  answer      Int
+  
+  @@map("question")
+}
+
+model UserChallenge {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  challengeId String
+  challenge   Challenge @relation(fields: [challengeId], references: [id])
+  
+  completedAt DateTime  @default(now())
+  
+  @@unique([userId, challengeId])
+
+  @@map("user_challenge")
+}
